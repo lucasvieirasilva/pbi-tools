@@ -255,6 +255,35 @@ namespace PbiTools.Model
         /// Serializes the entire model to a file system folder.
         /// </summary>
         /// <param name="path">A custom location to extract the model to (optional).</param>
+        public void ModelToFolder(string path = null, PbixProjectSettings settings = null)
+        {
+            var rootFolderPath = path ?? this.GetProjectFolder();
+            using (var projectFolder = new ProjectRootFolder(rootFolderPath))
+            {
+                var serializers = new PowerBIPartSerializers(projectFolder, settings ?? this.PbixProj.Settings);
+
+                Log.Information("Extracting PBIX file to: {Path}", projectFolder.BasePath);
+
+                // **** Parts ****
+                if (serializers.DataModel.Serialize(this.DataModel))
+                    Log.Information("DataModel extracted to: {Path}", serializers.DataModel.BasePath);
+
+                // **** Metadata ****
+                this.PbixProj.Version = PbixProject.CurrentVersion; // always set latest version on new pbixproj file
+                if (this.PbixProj.Created == default) this.PbixProj.Created = DateTimeOffset.Now;
+                this.PbixProj.LastModified = DateTimeOffset.Now;
+
+                if (settings == null) // Do not persist the PbixProj file if it was provided explicitly
+                    this.PbixProj.Save(projectFolder);
+
+                projectFolder.Commit();
+            }
+        }
+
+        /// <summary>
+        /// Serializes the entire model to a file system folder.
+        /// </summary>
+        /// <param name="path">A custom location to extract the model to (optional).</param>
         public void ToFolder(string path = null, PbixProjectSettings settings = null)
         {
             var rootFolderPath = path ?? this.GetProjectFolder();

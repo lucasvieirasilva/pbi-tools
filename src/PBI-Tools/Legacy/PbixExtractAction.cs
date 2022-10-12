@@ -37,6 +37,21 @@ namespace PbiTools.Actions
             _rootFolder = new ProjectRootFolder(PbixProject.GetDefaultProjectFolderForFile(reader.Path));
         }
 
+        public void ExtractModel()
+        {
+            var versionStr = this.ExtractVersion();
+            Log.Information($"Version extracted: {versionStr}");
+            var pbixProj = PbixProject.FromFolder(_rootFolder);
+
+            this.ExtractModel(pbixProj);
+            Log.Information("Model extracted");
+
+            pbixProj.Version = PbixProject.CurrentVersion; // always set latest version on new pbixproj file
+            pbixProj.Save(_rootFolder);
+
+            _rootFolder.Commit();
+        }
+
         public void ExtractAll()
         {
             var versionStr = this.ExtractVersion();
